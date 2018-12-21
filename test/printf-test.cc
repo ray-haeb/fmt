@@ -48,6 +48,40 @@ std::wstring test_sprintf(fmt::wstring_view format, const Args &... args) {
     << "format: " << format; \
   EXPECT_EQ(expected_output, fmt::sprintf(make_positional(format), arg))
 
+TEST(ASPrintfTest, HelloWorld) {
+  const char target[] = "Hello World!";
+  char buffer[32];
+  std::memset(buffer, -1, sizeof(buffer));
+  const auto size = fmt::asprintf(buffer, target);
+  EXPECT_EQ(std::strlen(target), size);
+  EXPECT_STREQ(target, buffer);
+}
+
+TEST(ASPrintfTest, HelloWorldWcharT) {
+  const wchar_t target[] = L"Hello World!";
+  wchar_t buffer[32];
+  std::memset(buffer, -1, sizeof(buffer));
+  const auto size = fmt::asprintf(buffer, target);
+  EXPECT_EQ(std::wcslen(target), size);
+  EXPECT_STREQ(target, buffer);
+}
+
+TEST(ASPrintfTest, ThrowIfBufferTooSmall) {
+  const char target[] = "Hello World!";
+  char buffer[8];
+  std::memset(buffer, -1, sizeof(buffer));
+  EXPECT_ANY_THROW(fmt::asprintf(buffer, target));
+}
+
+TEST(ASPrintfTest, Formatting) {
+  const char target[] = "i:123, f:42.23";
+  char buffer[32];
+  std::memset(buffer, -1, sizeof(buffer));
+  const auto size = fmt::asprintf(buffer, "i:%i, f:%2.2f", 123, 42.23f);
+  EXPECT_EQ(std::strlen(target), size);
+  EXPECT_STREQ(target, buffer);
+}
+
 TEST(PrintfTest, NoArgs) {
   EXPECT_EQ("test", test_sprintf("test"));
   EXPECT_EQ(L"test", fmt::sprintf(L"test"));

@@ -291,6 +291,26 @@ class basic_buffer {
 typedef basic_buffer<char> buffer;
 typedef basic_buffer<wchar_t> wbuffer;
 
+template<typename Char>
+class array_buffer : public basic_buffer<Char> {
+ protected:
+  void grow(std::size_t new_capacity) FMT_OVERRIDE {
+    if (new_capacity > capacity())
+      throw std::runtime_error("grow not supported for array_buffer");
+  }
+
+ public:
+  explicit array_buffer(Char *const array, const std::size_t size)
+    : basic_buffer<Char>{ array, 0, size } {
+  }
+
+  template<std::size_t Size>
+  explicit array_buffer(Char(&array)[Size])
+    : basic_buffer<Char>{ array, 0, Size } {
+  }
+
+};
+
 // A container-backed buffer.
 template <typename Container>
 class container_buffer : public basic_buffer<typename Container::value_type> {

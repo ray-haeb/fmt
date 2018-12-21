@@ -792,6 +792,49 @@ inline FMT_ENABLE_IF_T(internal::is_string<S>::value, int)
                   basic_format_args<context>(as));
 }
 
+
+/**
+  \rst
+  Formats arguments into the supplied array, throws if the array is too small
+  return value: number of characters written (not including the terminating zero)
+
+  **Example**::
+
+    char buffer[23];
+    std::size_t size = fmt::asprintf(buffer, 23, "The answer is %d", 42);
+  \endrst
+*/
+template<typename S, typename Char = FMT_CHAR(S), typename... Args>
+inline FMT_ENABLE_IF_T(internal::is_string<S>::value, std::size_t)
+    asprintf(Char *out_array, const std::size_t buffer_size, const S &format, const Args & ... args) {
+  internal::check_format_string<Args...>(format);
+  typedef internal::basic_buffer<Char> buffer;
+  typedef typename basic_printf_context_t<buffer>::type context;
+  format_arg_store<context, Args...> as{ args... };
+  internal::array_buffer<Char> buf{ out_array, buffer_size - 1 };
+  context{ std::back_inserter(*static_cast<buffer*>(&buf)), to_string_view(format), as }.format();
+  const auto size = buf.size();
+  out_array[size] = 0;
+  return size;
+}
+
+/**
+  \rst
+  Formats arguments into the supplied array, throws if the array is too small
+  return value: number of characters written (not including the terminating zero)
+
+  **Example**::
+
+    char buffer[23];
+    std::size_t size = fmt::asprintf(buffer, "The answer is %d", 42);
+  \endrst
+*/
+template<typename S, typename Char = FMT_CHAR(S), std::size_t BufferSize, typename... Args>
+inline FMT_ENABLE_IF_T(internal::is_string<S>::value, std::size_t)
+    asprintf(Char (&out_array)[BufferSize], const S &format, const Args & ... args) {
+  return asprintf(out_array, BufferSize, format, args...);
+}
+
 template <typename S, typename Char = FMT_CHAR(S)>
 inline int vprintf(const S &format,
                    basic_format_args<typename basic_printf_context_t<
